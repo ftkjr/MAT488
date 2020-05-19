@@ -1,0 +1,432 @@
+---
+title: "488 Lab 3"
+author: "Fred Kaesmann"
+date: "March 24, 2020"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+library(knitr)
+opts_chunk$set(echo = FALSE,
+               message = FALSE,
+               warning = FALSE,
+               include = FALSE)
+```
+
+```{r names}
+##### Names Vector ####
+# This will be used multiple times below
+namesVec <- 
+    c("Water (gals)", 
+      "Malted Barley (lbs)", 
+      "Hops (lbs)", 
+      "Brewer's Yeast (pkgs)")
+```
+
+
+\clearpage
+
+Ray,
+
+We looked over your production arrangements as requested and we are reasonably
+certain we have found some significant improvements to your current production
+model.
+
+From the outset we would like you to know that we understand the realities 
+of your current situation, resource management has 
+become a top priority in the industry given the recent shuttering of bars 
+and restaurants throughout the tri state area.
+Other breweries we have worked with have seen their revenue take a 40% to 50%
+hit, forcing them to furlough employees and cut pay for those remaining.
+Then on top of it are the difficult discussions with investors. 
+
+We believe that given your existing output, a small batch brewery like yourself
+could be well positioned to withstand a market downturn, assuming you are 
+willing to make some tough decisions.
+
+### The Numbers
+
+By the information you provided we have your current production at 
+100 gallons of Ale, 400 gallons of Lager and 200 gallons of Stout, from which
+your current monthly profit is \$17,734.
+This can be improved dramatically, though we must note this will come at the 
+cost of some difficult business decisions.
+
+Our proprietary model has developed an improved production plan relative to the 
+monthly profit by house beer.
+\footnote{Though we need to stress that our model does not take into account the 
+time required for brewing, nor the labor required for each beer, as the 
+information was not provided. 
+We would be more than happy to have our model account for 
+this if you would like to provide that information.}
+The implementation of this plan will require some changes not only to production
+but will also require changes at the brand level, so should you decide to
+pursue this to fruition, we highly recommend including a representative from 
+marketing and sales to discuss the impact on the brand image, in addition to
+the bottom line. 
+
+Our model has developed a production plan which will, by our calculations, 
+improve your montly profit by approximately 20% to \$21,507.
+We stress again that this is not a "free lunch," though this represents a 
+marked improvements in the bottom line, this assumes you cease production 
+of your Copy Cat "We Swear it's not a Repackaged Guinness" stout, on more than 
+just copyright infringement grounds. 
+We again stress the need to include marketing and sales in on this decision
+before moving forward, as our model has not looked into market sentiment
+surrounding each of your products.
+\footnote{We feel now is the appropriate time to mention that this is another
+one of the many forms of analysis we can provide upon request.}
+
+Our model maximizes your profit with 337 gallons of your "Haughty Nurse Ale" and 
+524 gallons of your "Sam Clemens Style Lager."
+
+### The New Deal
+
+We also looked into your questions about the profitablility of entering into a 
+strategic partnership with the Two Dog Brewery down the road. 
+Our model shows this being a very green new deal, as this will increase 
+your monthly profits, on top of what the model has already shown above. 
+Should you enter into the agreement with Two Dog we find that would increase
+profits an additional 10% to \$23463.
+
+
+As always it was a pleasure working with you gentlemen, and if you have any
+further questions feel free to contact us
+
+
+
+Fred Kaesmann
+
+President and CEO 
+
+Brewing by the Numbers 
+
+\clearpage
+# Appendix I
+## Methods and Calculations
+
+We approached this as a simple exercise in linear programming.
+
+Given the initial revenue function
+\begin{equation*}
+  \text{Monthly Revenue } = \$38 \text{ per gallon of Ale} + \$26 
+  \text{ per gallon of Lager} + \$40.50 \text{ per gallon of Stout}
+\end{equation*}
+
+the ingredient requirements 
+```{r ingredient_matrix, include=TRUE}
+##### Create Ingredient Matrix ####
+ingredientMatrix <- matrix(
+             c(1.250, 1.100, 1.300,
+               2.250, 1.222, 3.233,
+               0.045, 0.011, 0.022,
+               0.157, 0.185, 0.172),
+             byrow = TRUE,
+  nrow = 4,
+  dimnames = list(
+    # Row Names
+    namesVec, 
+    # Column Names
+    c("Ale", "Lager", "Stout"))
+)
+
+kable(ingredientMatrix)
+```
+
+as well as the associated costs
+```{r cost_vector, include=TRUE}
+##### Cost Vector ####
+costVector <- matrix(
+             c(0.45,
+               2.50,
+               3.75, 
+               6.00),
+             nrow = 4,
+             byrow = TRUE,
+             dimnames = list(
+               namesVec,
+               "Material Costs"
+             ))
+kable(costVector)
+```
+
+we were able to combine the cost vector and the ingredient matrix to develop a 
+cost matrix.
+
+```{r cost_matrix, include=TRUE}
+##### Matrix of Costs ####
+costMatrix <- ingredientMatrix * costVector[, 1]
+kable(costMatrix)
+```
+
+This cost matrix yields our cost per style of beer,
+
+\begin{equation*}
+  \text{Monthly Cost } = \$7.30 \text{ per gallon of Ale} +  \$4.70  \text{ per gallon of Lager} + 
+  \$9.78 \text{ per gallon of Stout}
+\end{equation*}
+
+which, when subtracted from the above revenue equation, gives us the
+montly profit for the brewery.
+
+\begin{equation*}
+  \text{Monthly Profit } = \$30.70 \text{ per gallon of Ale} + \$21.30 
+  \text{ per gallon of Lager} + \$30.72 \text{ per gallon of Stout}
+\end{equation*}
+
+```{r profit}
+##### Profit ####
+# Objective function
+# Profit = Revenue - Cost
+profit <- c(38 - sum(costMatrix[, 1]), 
+            26 - sum(costMatrix[, 2]),
+         40.50 - sum(costMatrix[, 3]))
+
+
+##### Constraint Directionals ####
+directionals <- c("<=", 
+                  "<=", 
+                  "<=", 
+                  "<=")
+```
+
+\clearpage
+Our given system constrains we were,
+```{r avail_vec, include=TRUE}
+##### Availablility Vector ####
+availablilityVector <- matrix(c(
+    2000, 
+    1400, 
+    50, 
+    150),
+    byrow = TRUE,
+    dimnames = list(
+      namesVec,
+      "Availability"
+    )
+)
+
+# Nice display
+kable(availablilityVector)
+```
+
+and when combined with the cost per resource gives us the budgetary impact of 
+our resource constraints. 
+
+```{r cost_constraint, include=TRUE}
+##### Spending Limits ####
+costConstraint <- availablilityVector * costVector
+
+colnames(costConstraint) <- "Availablility (Dollars)"
+kable(costConstraint)
+```
+
+Taking all these factors into account, our model finds that profit is maximized 
+at \$21,507 when Copy Cat makes 337 gallons of Ale, 524 gallons of Lager.
+Our model also returns shadow prices of \$4.16 for Malted Barley and \$7.28 
+for yeast packages, meaning for each additional pound of Malted Barley and 
+each additional yeast package the brewery can expect to see increases in monthly
+profit by \$4.16 and \$7.28 respectively. 
+```{r solve}
+##### Solve with lp() ####
+solutions <- lpSolve::lp("max",
+                profit,
+                costMatrix,
+                directionals,
+                costConstraint,
+                int.vec = c(1:3),
+                compute.sens = TRUE)
+
+##### Explore Solutions Object ####
+cat("Our x,y,z values are:\n", solutions$solution)
+
+cat("\nThe profit is:\n", solutions$objval)
+    
+cat("\nThe Shadow Prices are:\n", solutions$duals)
+```
+
+### The New Deal
+After the deal offered by Two Dog, we readjust our resource availability, 
+recognizing the increased availability of Malted Barley and additional yeast
+packages.
+```{r new_availability, include=TRUE}
+##### New Availability Vector ####
+new_availability <- matrix(
+  c(
+    2000, 
+    2000, 
+    50, 
+    155),
+  nrow = 4,
+  dimnames = list(
+    namesVec,
+    "New Availability"
+  )
+)
+# Nice display
+kable(new_availability)
+```
+
+We solve as before using the new resource constraints, and find that even 
+after the new deal, we see increases in profits by an additional 10% to \$23463.
+```{r new_solutions}
+##### New Solutions ####
+new_solutions <- lpSolve::lp("max",
+                profit,
+                ingredientMatrix,
+                directionals,
+                new_availability,
+                compute.sens = TRUE)
+
+##### Explore Solutions Object ####
+cat("Our producction levels of Ale, Lagger, and Stout (repsectively) are:\n", 
+    new_solutions$solution)
+
+cat("\nThe Profit after the deal is:\n", 
+    new_solutions$objval - 600 * 7.5)
+    
+    
+cat("\nThe Shadow Prices are:\n", 
+    new_solutions$duals)
+```
+We are left with new shadow prices for Malted Barley and Yeast Packages, 
+\$10.41 and \$46.37 respectively. 
+
+
+\clearpage
+# Appendix II
+
+```{r appendix_code, echo=TRUE, eval=FALSE, include=TRUE}
+
+##### Chunk Options ####
+library(knitr)                  # chunk options and kable() for fancy display
+opts_chunk$set(echo = TRUE,
+               message = FALSE,
+               warning = FALSE)
+
+##### Names Vector ####
+# This will be used multiple times below
+namesVec <- 
+    c("Water (gals)", 
+      "Malted Barley (lbs)", 
+      "Hops (lbs)", 
+      "Brewer's Yeast (pkgs)")
+
+##### Create Ingredient Matrix ####
+ingredientMatrix <- matrix(
+             c(1.250, 1.100, 1.300,
+               2.250, 1.222, 3.233,
+               0.045, 0.011, 0.022,
+               0.157, 0.185, 0.172),
+             byrow = TRUE,
+  nrow = 4,
+  dimnames = list(
+    # Row Names
+    namesVec, 
+    # Column Names
+    c("Ale", "Lager", "Stout"))
+)
+kable(ingredientMatrix)
+
+
+##### Cost Vector ####
+costVector <- matrix(
+             c(0.45,
+               2.50,
+               3.75, 
+               6.00),
+             nrow = 4,
+             byrow = TRUE,
+             dimnames = list(
+               namesVec,
+               "Material Costs"
+             ))
+kable(costVector)
+
+costMatrix <- ingredientMatrix * costVector[, 1]
+kable(costMatrix)
+
+##### Profit ####
+# Objective function
+# Profit = Revenue - Cost
+profit <- c(38 - sum(costMatrix[, 1]), # Ale 
+            26 - sum(costMatrix[, 2]), # Lager
+         40.50 - sum(costMatrix[, 3])) # Stout
+
+##### Constraint Directionals ####
+directionals <- c("<=", 
+                  "<=", 
+                  "<=", 
+                  "<=")
+
+##### Availablility Vector ####
+availablilityVector <- matrix(c(
+    2000, 
+    1400, 
+    50, 
+    150),
+    byrow = TRUE,
+    dimnames = list(
+      namesVec,
+      "Availability"
+    )
+)
+# Nice display
+kable(availablilityVector)
+
+##### Spending Limits ####
+costConstraint <- availablilityVector * costVector
+colnames(costConstraint) <- "Availablility (Dollars)"
+kable(costConstraint)
+
+##### Solve with lp() ####
+solutions <- lpSolve::lp("max",
+                profit,
+                costMatrix,
+                directionals,
+                costConstraint,
+                compute.sens = TRUE)
+
+##### Explore Solutions Object ####
+cat("Our x,y,z values are:\n", solutions$solution)
+
+cat("\nThe profit is:\n", solutions$objval)
+    
+cat("\nThe Shadow Prices are:\n", solutions$duals)
+
+##### New Availability Vector ####
+new_availability <- matrix(
+  c(
+    2000, 
+    2000, 
+    50, 
+    155),
+  nrow = 4,
+  dimnames = list(
+    namesVec,
+    "New Availability"
+  )
+)
+# Nice display
+kable(new_availability)
+
+##### New Solutions ####
+new_solutions <- lpSolve::lp("max",
+                profit,
+                ingredientMatrix,
+                directionals,
+                new_availability,
+                compute.sens = TRUE)
+
+##### Explore Solutions Object ####
+cat("Our producction levels of Ale, Lagger, and Stout (repsectively) are:\n", 
+    new_solutions$solution)
+
+cat("\nThe Profit after the deal is:\n", 
+    new_solutions$objval - 600 * 7.5)
+    
+    
+cat("\nThe Shadow Prices are:\n", 
+    new_solutions$duals)
+
+```
